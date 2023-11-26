@@ -13,8 +13,6 @@ difference = M1 - Minitial;
 if (difference) > 0
     direction = 1;
     prevSide = 1;
-elseif (difference == 0 )
-    direction = 5;
 else
     direction = 0;
     prevSide = 0;
@@ -37,8 +35,6 @@ while rotations < 10
     if (CurrSide == 1) && (prevSide == 0)
       rotations = rotations + 1;
     end
-  elseif direction == 5
-      rotations = rotations +0.25;
   else 
     if (CurrSide == 0) && (prevSide == 1)
       rotations = rotations + 1;        
