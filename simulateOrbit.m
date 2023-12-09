@@ -1,50 +1,36 @@
-function [PositionVector,koeVector] = simulateOrbit(Mu, rInitial, vInitial, adInitial)
+function [PositionVector,VelocityVector, koeVector] = simulateOrbit(Mu, rInitial, vInitial, adInitial)
 %UNTITLED5 Summary of this function goes here
 %   Detailed explanation goes here
 
 koeInitial = rv2koe(rInitial,vInitial,Mu, 'deg');
-Minitial = koeInitial(6);
-rotations = 0;
-[PosN, VelN, koeN] = updateStep(Mu, rInitial, vInitial, adInitial); 
-PositionVector = [rInitial; PosN];
-koeVector = [koeInitial,koeN];
-M1 = koeN(6);
-difference = M1 - Minitial;
-if (difference) > 0
-    direction = 1;
-    prevSide = 1;
-else
-    direction = 0;
-    prevSide = 0;
-end
-i =1;
 
-while rotations < 10
-  i=i+1;
-  [PosN, VelN, koeN] = updateStep(Mu, PosN, VelN, adInitial); 
-  PositionVector = [PositionVector; PosN];
-  koeVector = [koeVector,koeN];
-  Mnew = koeN(6);
-  difference = Mnew - M1;
-  if (difference) > 0
-      CurrSide = 1;
-  else 
-      CurrSide = 0;
-  end
-  if direction == 1
-    if (CurrSide == 1) && (prevSide == 0)
-      rotations = rotations + 1;
-    end
-  else 
-    if (CurrSide == 0) && (prevSide == 1)
-      rotations = rotations + 1;        
-    end
-  
-  end
-  prevSide = CurrSide;
+T = 2 * pi * sqrt( koeInitial(1)^3 / Mu ); 
+%just doing 12 rotations instead of trying to determine when
+% 10 rotations occur with changing a
+time = linspace( 0 , 12 * T , 5000 );
 
-  if i > 1000
-      break
-  end
+%  Set integrator options
+tol             = 1e-12;    
+options         = odeset( 'RelTol' , tol , 'AbsTol' , tol );
+
+const.mu = Mu;
+const.adInitial = adInitial;
+
+xc0 = [rInitial, vInitial];
+[ ~ , xc ]      = ode45( @dynamics_Newton , time , xc0 , options , const );
+
+[m,n] = size(xc);
+koeVector(1,:) = koeInitial;
+
+
+for i=1:m
+  rI = xc(i,1:3);
+  vI = xc(i,4:6);
+  koeVector(i,:) = rv2koe(rI,vI,Mu, 'deg');
 end
+
+
+PositionVector = xc(:,1:3);
+VelocityVector = xc(:,4:6);
+
 end
